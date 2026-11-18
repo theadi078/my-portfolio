@@ -1,3 +1,4 @@
+
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
@@ -16,10 +17,17 @@ export async function GET(_request: NextRequest, { params }: Params) {
   try {
     await requireAdmin();
     const { collection, id } = await params;
-    if (!isCollectionKey(collection)) return fail("Unknown collection.", 404);
+
+    if (!isCollectionKey(collection)) {
+      return fail("Unknown collection.", 404);
+    }
+
     await connectToDatabase();
+
     const doc = await getCollection(collection).model().findById(id).lean();
+
     if (!doc) return fail("That entry no longer exists.", 404);
+
     return ok(serialize(doc));
   } catch (error) {
     return handleApiError(error);
@@ -30,21 +38,42 @@ export async function GET(_request: NextRequest, { params }: Params) {
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     await requireAdmin();
+
     const { collection, id } = await params;
-    if (!isCollectionKey(collection)) return fail("Unknown collection.", 404);
+
+    if (!isCollectionKey(collection)) {
+      return fail("Unknown collection.", 404);
+    }
 
     const config = getCollection(collection);
-    const partial = (config.schema as unknown as { partial: () => { parse: (v: unknown) => unknown } }).partial();
-    const payload = partial.parse(cleanPayload(await request.json()));
+
+    const partial = (
+      config.schema as unknown as {
+        partial: () => { parse: (v: unknown) => unknown };
+      }
+    ).partial();
+
+    const payload = partial.parse(
+      cleanPayload(await request.json())
+    ) as Record<string, any>;
 
     await connectToDatabase();
+
     const updated = await config
       .model()
-      .findByIdAndUpdate(id, { $set: payload }, { new: true, runValidators: true })
+      .findByIdAndUpdate(
+        id,
+        { $set: payload },
+        { new: true, runValidators: true }
+      )
       .lean();
-    if (!updated) return fail("That entry no longer exists.", 404);
+
+    if (!updated) {
+      return fail("That entry no longer exists.", 404);
+    }
 
     revalidatePublicSite();
+
     return ok(serialize(updated));
   } catch (error) {
     return handleApiError(error);
@@ -54,14 +83,26 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
     await requireAdmin();
+
     const { collection, id } = await params;
-    if (!isCollectionKey(collection)) return fail("Unknown collection.", 404);
+
+    if (!isCollectionKey(collection)) {
+      return fail("Unknown collection.", 404);
+    }
 
     await connectToDatabase();
-    const deleted = await getCollection(collection).model().findByIdAndDelete(id).lean();
-    if (!deleted) return fail("That entry no longer exists.", 404);
+
+    const deleted = await getCollection(collection)
+      .model()
+      .findByIdAndDelete(id)
+      .lean();
+
+    if (!deleted) {
+      return fail("That entry no longer exists.", 404);
+    }
 
     revalidatePublicSite();
+
     return ok({ deleted: true });
   } catch (error) {
     return handleApiError(error);
