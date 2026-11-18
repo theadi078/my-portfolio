@@ -1,20 +1,39 @@
+
 "use client";
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import type { Media } from "@/models/common";
 
-export function Gallery({ images, title }: { images: Media[]; title: string }) {
+type GalleryImage = {
+  url: string;
+  alt?: string | null;
+};
+
+export function Gallery({
+  images,
+  title,
+}: {
+  images: ReadonlyArray<GalleryImage>;
+  title: string;
+}) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (openIndex === null) return;
+
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") setOpenIndex(null);
-      if (event.key === "ArrowRight") setOpenIndex((i) => (i === null ? i : (i + 1) % images.length));
-      if (event.key === "ArrowLeft") setOpenIndex((i) => (i === null ? i : (i - 1 + images.length) % images.length));
+      if (event.key === "ArrowRight") {
+        setOpenIndex((i) => (i === null ? i : (i + 1) % images.length));
+      }
+      if (event.key === "ArrowLeft") {
+        setOpenIndex((i) =>
+          i === null ? i : (i - 1 + images.length) % images.length
+        );
+      }
     }
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [openIndex, images.length]);
@@ -51,37 +70,55 @@ export function Gallery({ images, title }: { images: Media[]; title: string }) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
           onClick={() => setOpenIndex(null)}
         >
-          <div className="relative max-h-full w-full max-w-5xl" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="relative max-h-full w-full max-w-5xl"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="relative aspect-[16/10] w-full">
               <Image
                 src={images[openIndex].url}
-                alt={images[openIndex].alt || `${title} screenshot ${openIndex + 1}`}
+                alt={
+                  images[openIndex].alt ||
+                  `${title} screenshot ${openIndex + 1}`
+                }
                 fill
                 sizes="90vw"
                 className="rounded-card object-contain"
               />
             </div>
+
             <div className="mt-4 flex items-center justify-between">
               <button
                 type="button"
                 aria-label="Previous screenshot"
-                onClick={() => setOpenIndex((i) => (i === null ? i : (i - 1 + images.length) % images.length))}
+                onClick={() =>
+                  setOpenIndex((i) =>
+                    i === null ? i : (i - 1 + images.length) % images.length
+                  )
+                }
                 className="grid h-10 w-10 place-items-center rounded-btn border border-white/25 text-white/80 hover:text-white"
               >
                 <ChevronLeft size={18} />
               </button>
+
               <span className="text-[13px] text-white/70">
                 {openIndex + 1} / {images.length}
               </span>
+
               <button
                 type="button"
                 aria-label="Next screenshot"
-                onClick={() => setOpenIndex((i) => (i === null ? i : (i + 1) % images.length))}
+                onClick={() =>
+                  setOpenIndex((i) =>
+                    i === null ? i : (i + 1) % images.length
+                  )
+                }
                 className="grid h-10 w-10 place-items-center rounded-btn border border-white/25 text-white/80 hover:text-white"
               >
                 <ChevronRight size={18} />
               </button>
             </div>
+
             <button
               type="button"
               aria-label="Close"
